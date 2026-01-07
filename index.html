@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي خوارزميات الجدولة المتقدم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --card-bg: #ffffff;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+            --glow: 0 0 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(67, 97, 238, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(247, 37, 133, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(76, 201, 240, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        /* الترويسة */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(90deg, rgba(67, 97, 238, 0.9), rgba(58, 12, 163, 0.9));
+            color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow), var(--glow);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.2;
+            z-index: 0;
+            animation: moveBackground 20s linear infinite;
+        }
+        
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-30px, -30px) rotate(360deg); }
+        }
+        
+        header h1 {
+            font-size: 3.2rem;
+            margin-bottom: 15px;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(90deg, #fff, #f72585);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(247, 37, 133, 0.7), 0 0 30px rgba(67, 97, 238, 0.5); }
+        }
+        
+        header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* نظام التبويب */
+        .tabs-container {
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius);
+            padding: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tab-button {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: calc(var(--radius) - 5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* تخطيط الصفحة */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* البطاقات */
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            height: 100%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), var(--glow);
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 2rem;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+            transition: var(--transition);
+        }
+        
+        .card:hover .card-icon {
+            transform: rotate(15deg) scale(1.1);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.6);
+        }
+        
+        .card-title {
+            font-size: 2rem;
+            color: white;
+            font-weight: 700;
+            position: relative;
+        }
+        
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+        }
+        
+        /* صفحة الأسماء */
+        .names-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+        }
+        
+        .names-card {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.2), rgba(247, 37, 133, 0.1));
+            border-radius: var(--radius);
+            padding: 50px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow), var(--glow);
+        }
+        
+        .names-title {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.3);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 15px;
+        }
+        
+        .names-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 50%;
+            transform: translateX(50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+        
+        .names-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .name-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .name-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .name-item i {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        /* إدخال عدد العمليات */
+        .process-count-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        
+        .process-count-section:hover {
+            border-color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .count-input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .count-input-group label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .count-input {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        
+        .count-input input {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-family: 'Tajawal', sans-serif;
+            transition: var(--transition);
+            color: white;
+            text-align: center;
+        }
+        
+        .count-input input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        /* نماذج إدخال العمليات */
+        .process-inputs-section {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .process-inputs-section::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .process-inputs-section::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .process-inputs-section::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .process-input-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            transition: var(--transition);
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .process-input-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-left-color: var(--accent);
+            transform: translateX(-5px);
+        }
+        
+        .process-input-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .process-input-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .process-input-title {
+            font-size: 1.3rem;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .input-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-field {
+            position: relative;
+        }
+        
+        .input-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--success);
+            font-size: 0.95rem;
+        }
+        
+        .input-field input, .input-field select {
+            width: 100%;
+            padding: 15px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Tajawal', sans-serif;
+            transition: var(--transition);
+            color: white;
+        }
+        
+        .input-field input:focus, .input-field select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .input-field input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* أزرار */
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6c757d, #495057);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            color: white;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.6);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.6);
+        }
+        
+        .btn-accent {
+            background: linear-gradient(90deg, var(--accent), #b5179e);
+            color: white;
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.4);
+        }
+        
+        .btn-accent:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.6);
+        }
+        
+        .buttons-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        /* خوارزميات التحديد */
+        .algorithms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .algorithm-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .algorithm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transition: var(--transition);
+        }
+        
+        .algorithm-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .algorithm-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .algorithm-card.selected {
+            border-color: var(--primary);
+            background: rgba(67, 97, 238, 0.15);
+            box-shadow: 0 0 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .algorithm-card.selected::before {
+            transform: scaleX(1);
+        }
+        
+        .algorithm-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+        
+        .algorithm-card:hover .algorithm-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        /* مخطط جانت */
+        .gantt-container {
+            margin-top: 20px;
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+        }
+        
+        .gantt-chart {
+            display: flex;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .gantt-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            transition: var(--transition);
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .gantt-segment:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .gantt-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+        
+        /* النتائج الإحصائية */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.2), rgba(247, 37, 133, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary);
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--success);
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.3);
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* جدول النتائج */
+        .results-table-container {
+            margin-top: 30px;
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        thead {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        th {
+            padding: 20px 15px;
+            text-align: right;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+        
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        td {
+            padding: 18px 15px;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* التذييل */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95rem;
+        }
+        
+        /* تأثيرات التحميل */
+        .loading {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* رسائل التنبيه */
+        .alert {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .alert i {
+            font-size: 1.5rem;
+        }
+        
+        .alert-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* التجاوب للهواتف */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .tab-button {
+                min-width: 150px;
+                padding: 15px;
+                font-size: 1rem;
+            }
+            
+            .names-title {
+                font-size: 2rem;
+            }
+            
+            .names-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .card-title {
+                font-size: 1.6rem;
+            }
+            
+            .buttons-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        /* رسوم متحركة للنجوم */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .twinkle {
+            animation: twinkle 3s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- النجوم المتحركة -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <!-- الترويسة -->
+        <header>
+            <h1><i class="fas fa-cogs twinkle"></i> محاكي خوارزميات الجدولة المتقدم</h1>
+            <p>أدخل عدد العمليات ثم املأ البيانات يدوياً لكل عملية، واختبر خوارزميات الجدولة المختلفة</p>
+        </header>
+        
+        <!-- نظام التبويب -->
+        <div class="tabs-container">
+            <button class="tab-button active" data-tab="simulator">
+                <i class="fas fa-desktop"></i> المحاكي
+            </button>
+            <button class="tab-button" data-tab="names">
+                <i class="fas fa-users"></i> أسماء الطلاب
+            </button>
+        </div>
+        
+        <!-- محتوى تبويب المحاكي -->
+        <div id="simulator" class="tab-content active">
+            <!-- التخطيط الرئيسي -->
+            <div class="main-layout">
+                <!-- قسم إدخال العمليات -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <h2 class="card-title">إدخال بيانات العمليات</h2>
+                    </div>
+                    
+                    <!-- قسم إدخال عدد العمليات -->
+                    <div class="process-count-section">
+                        <div class="count-input-group">
+                            <label for="processCount"><i class="fas fa-list-ol"></i> عدد العمليات المطلوبة:</label>
+                            <div class="count-input">
+                                <input type="number" id="processCount" min="1" max="15" placeholder="أدخل عدد العمليات (1-15)" value="">
+                            </div>
+                            <button id="generateProcessesBtn" class="btn btn-accent">
+                                <i class="fas fa-magic"></i> إنشاء حقول الإدخال
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- قسم حقول إدخال العمليات -->
+                    <div id="processInputsSection" class="process-inputs-section">
+                        <div class="alert" id="processAlert" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <span>الرجاء تحديد عدد العمليات أولاً ثم النقر على "إنشاء حقول الإدخال"</span>
+                        </div>
+                    </div>
+                    
+                    <!-- أزرار التحكم -->
+                    <div class="buttons-group">
+                        <button id="addRandomBtn" class="btn btn-success" style="display: none;">
+                            <i class="fas fa-dice"></i> تعبئة عشوائية
+                        </button>
+                        <button id="clearProcessesBtn" class="btn btn-danger" style="display: none;">
+                            <i class="fas fa-trash-alt"></i> مسح الحقول
+                        </button>
+                        <button id="saveProcessesBtn" class="btn btn-primary" style="display: none;">
+                            <i class="fas fa-save"></i> حفظ العمليات
+                        </button>
+                    </div>
+                    
+                    <!-- قائمة العمليات المحفوظة -->
+                    <div id="savedProcessesSection" style="display: none; margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px; color: var(--success);">
+                            <i class="fas fa-check-circle"></i> العمليات المحفوظة
+                        </h3>
+                        <div id="savedProcessesList">
+                            <!-- سيتم عرض العمليات المحفوظة هنا -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- قسم الخوارزميات والنتائج -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h2 class="card-title">خوارزميات الجدولة والنتائج</h2>
+                    </div>
+                    
+                    <!-- اختيار الخوارزمية -->
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="margin-bottom: 20px; color: white;">
+                            <i class="fas fa-project-diagram"></i> اختر خوارزمية الجدولة:
+                        </h3>
+                        <div class="algorithms-grid">
+                            <div class="algorithm-card" data-algorithm="fcfs">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-forward"></i>
+                                </div>
+                                <h4>أول ما يأتي أول ما يخدم</h4>
+                                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">FCFS</p>
+                            </div>
+                            
+                            <div class="algorithm-card" data-algorithm="sjf">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-sort-amount-down"></i>
+                                </div>
+                                <h4>أقصر مهمة أولاً</h4>
+                                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">SJF</p>
+                            </div>
+                            
+                            <div class="algorithm-card" data-algorithm="srtf">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <h4>أقصر وقت متبقي أولاً</h4>
+                                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">SRTF</p>
+                            </div>
+                            
+                            <div class="algorithm-card" data-algorithm="priority">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-flag"></i>
+                                </div>
+                                <h4>الأولوية</h4>
+                                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">Priority</p>
+                            </div>
+                            
+                            <div class="algorithm-card" data-algorithm="rr">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h4>التقسيم الزمني</h4>
+                                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">Round Robin</p>
+                            </div>
+                        </div>
+                        
+                        <!-- إعدادات إضافية للتقسيم الزمني -->
+                        <div id="rrSettings" style="display: none; margin-top: 25px;">
+                            <div class="input-field">
+                                <label for="quantum"><i class="fas fa-hourglass-half"></i> الكمية الزمنية للتقسيم</label>
+                                <input type="number" id="quantum" placeholder="أدخل الكمية الزمنية (مثال: 2)" min="1" value="2">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- زر تشغيل المحاكاة -->
+                    <div style="margin-top: 30px;">
+                        <button id="runSimulationBtn" class="btn btn-success" style="width: 100%; padding: 20px; font-size: 1.2rem;">
+                            <i class="fas fa-play-circle"></i> تشغيل المحاكاة
+                        </button>
+                    </div>
+                    
+                    <!-- مخطط جانت -->
+                    <div id="ganttSection" style="display: none; margin-top: 40px;">
+                        <h3 style="margin-bottom: 20px; color: white;">
+                            <i class="fas fa-chart-bar"></i> مخطط جانت
+                        </h3>
+                        <div class="gantt-container">
+                            <div class="gantt-chart" id="ganttChart">
+                                <!-- سيتم رسم مخطط جانت هنا ديناميكيًا -->
+                            </div>
+                            <div class="gantt-labels" id="ganttLabels">
+                                <!-- سيتم إضافة التسميات هنا ديناميكيًا -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- النتائج الإحصائية -->
+                    <div id="resultsSection" style="display: none; margin-top: 40px;">
+                        <h3 style="margin-bottom: 25px; color: white;">
+                            <i class="fas fa-chart-line"></i> النتائج الإحصائية
+                        </h3>
+                        <div class="stats-container" id="statsContainer">
+                            <!-- سيتم إضافة الإحصائيات هنا ديناميكيًا -->
+                        </div>
+                        
+                        <!-- جدول النتائج -->
+                        <div style="margin-top: 40px;">
+                            <h3 style="margin-bottom: 20px; color: white;">
+                                <i class="fas fa-table"></i> تفاصيل النتائج
+                            </h3>
+                            <div class="results-table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>العملية</th>
+                                            <th>زمن الوصول</th>
+                                            <th>زمن التنفيذ</th>
+                                            <th>زمن الانتهاء</th>
+                                            <th>زمن الانتظار</th>
+                                            <th>زمن الدوران</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultsTable">
+                                        <!-- سيتم إضافة النتائج هنا ديناميكيًا -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- محتوى تبويب الأسماء -->
+        <div id="names" class="tab-content">
+            <div class="names-container">
+                <div class="names-card">
+                    <h2 class="names-title">
+                        <i class="fas fa-user-graduate"></i> أسماء الطلاب المشاركين
+                    </h2>
+                    <div class="names-list">
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            عثمان عبدالكريم
+                        </div>
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            حسام حسين
+                        </div>
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            شايف محمد
+                        </div>
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            عبدالرقيب محرز
+                        </div>
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            انيس فضل
+                        </div>
+                        <div class="name-item">
+                            <i class="fas fa-user"></i>
+                            اكرم محمد
+                        </div>
+                    </div>
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.8);">
+                            <i class="fas fa-info-circle" style="color: var(--success);"></i>
+                            مشروع محاكي خوارزميات الجدولة المتقدم - مادة نظم التشغيل
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- التذييل -->
+        <footer>
+            <p>تم التطوير باستخدام HTML, CSS و JavaScript | محاكاة خوارزميات جدولة العمليات</p>
+            <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.7;">
+                الخوارزميات المدعومة: أول ما يأتي أول ما يخدم (FCFS) | أقصر مهمة أولاً (SJF) | أقصر وقت متبقي أولاً (SRTF) | الأولوية | التقسيم الزمني (RR)
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // البيانات والمتغيرات العامة
+        let processes = [];
+        let selectedAlgorithm = 'fcfs';
+        let processCount = 0;
+        
+        // ألوان لمخطط جانت
+        const ganttColors = [
+            '#4361ee', '#f72585', '#4cc9f0', '#f8961e', '#7209b7',
+            '#06d6a0', '#ef476f', '#118ab2', '#ffd166', '#8338ec',
+            '#3a86ff', '#fb5607', '#ff006e', '#ffbe0b', '#38b000'
+        ];
+        
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            // إنشاء النجوم المتحركة
+            createParticles();
+            
+            // تعيين أحداث التبويب
+            setupTabs();
+            
+            // تعيين أحداث الأزرار
+            document.getElementById('generateProcessesBtn').addEventListener('click', generateProcessInputs);
+            document.getElementById('addRandomBtn').addEventListener('click', fillRandomData);
+            document.getElementById('clearProcessesBtn').addEventListener('click', clearProcessInputs);
+            document.getElementById('saveProcessesBtn').addEventListener('click', saveProcesses);
+            document.getElementById('runSimulationBtn').addEventListener('click', runSimulation);
+            
+            // تعيين أحداث خوارزميات الجدولة
+            const algorithmCards = document.querySelectorAll('.algorithm-card');
+            algorithmCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // إزالة التحديد من جميع البطاقات
+                    algorithmCards.forEach(c => c.classList.remove('selected'));
+                    
+                    // تحديد البطاقة المختارة
+                    this.classList.add('selected');
+                    selectedAlgorithm = this.getAttribute('data-algorithm');
+                    
+                    // إظهار/إخفاء إعدادات التقسيم الزمني
+                    const rrSettings = document.getElementById('rrSettings');
+                    if (selectedAlgorithm === 'rr') {
+                        rrSettings.style.display = 'block';
+                    } else {
+                        rrSettings.style.display = 'none';
+                    }
+                });
+            });
+            
+            // تحديد خوارزمية افتراضية
+            document.querySelector('[data-algorithm="fcfs"]').classList.add('selected');
+            
+            // إظهار رسالة توجيهية
+            showAlert('الرجاء تحديد عدد العمليات أولاً ثم النقر على "إنشاء حقول الإدخال"', 'info');
+        });
+        
+        // إعداد نظام التبويب
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    
+                    // إزالة النشاط من جميع الأزرار والمحتويات
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // إضافة النشاط للزر والمحتوى المحدد
+                    button.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // إذا كان التبويب هو المحاكي، إخفاء النتائج
+                    if (tabId === 'simulator') {
+                        hideResults();
+                    }
+                });
+            });
+        }
+        
+        // إنشاء النجوم المتحركة
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // تحديد موقع عشوائي
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const size = Math.random() * 3 + 1;
+                const delay = Math.random() * 15;
+                const duration = Math.random() * 10 + 10;
+                
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // عرض رسالة تنبيه
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.getElementById('processAlert');
+            alertDiv.querySelector('span').textContent = message;
+            
+            // تغيير اللون حسب نوع الرسالة
+            alertDiv.className = 'alert';
+            if (type === 'success') {
+                alertDiv.classList.add('alert-success');
+                alertDiv.querySelector('i').className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                alertDiv.querySelector('i').className = 'fas fa-exclamation-circle';
+            } else {
+                alertDiv.querySelector('i').className = 'fas fa-info-circle';
+            }
+            
+            alertDiv.style.display = 'flex';
+            
+            // إخفاء الرسالة بعد 5 ثواني
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // إنشاء حقول إدخال العمليات
+        function generateProcessInputs() {
+            const countInput = document.getElementById('processCount');
+            const count = parseInt(countInput.value);
+            
+            // التحقق من صحة المدخلات
+            if (isNaN(count) || count < 1 || count > 15) {
+                showAlert('الرجاء إدخال عدد صحيح بين 1 و 15', 'error');
+                return;
+            }
+            
+            processCount = count;
+            const inputsSection = document.getElementById('processInputsSection');
+            
+            // مسح الحقول القديمة
+            inputsSection.innerHTML = '';
+            
+            // إنشاء حقول إدخال لكل عملية
+            for (let i = 1; i <= count; i++) {
+                const processCard = document.createElement('div');
+                processCard.className = 'process-input-card';
+                processCard.id = `process-card-${i}`;
+                
+                processCard.innerHTML = `
+                    <div class="process-input-header">
+                        <div class="process-input-icon">P${i}</div>
+                        <h3 class="process-input-title">العملية P${i}</h3>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-field">
+                            <label for="arrival-${i}"><i class="fas fa-clock"></i> زمن الوصول</label>
+                            <input type="number" id="arrival-${i}" placeholder="مثال: ${i-1}" min="0" value="${i-1}">
+                        </div>
+                        <div class="input-field">
+                            <label for="burst-${i}"><i class="fas fa-bolt"></i> زمن التنفيذ</label>
+                            <input type="number" id="burst-${i}" placeholder="مثال: ${Math.floor(Math.random() * 10) + 1}" min="1" value="${Math.floor(Math.random() * 10) + 1}">
+                        </div>
+                        <div class="input-field">
+                            <label for="priority-${i}"><i class="fas fa-flag"></i> الأولوية</label>
+                            <input type="number" id="priority-${i}" placeholder="مثال: ${Math.floor(Math.random() * 5) + 1}" min="1" value="${Math.floor(Math.random() * 5) + 1}">
+                        </div>
+                        <div class="input-field">
+                            <label for="color-${i}"><i class="fas fa-palette"></i> اللون</label>
+                            <select id="color-${i}" class="color-select">
+                                ${generateColorOptions(i)}
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                inputsSection.appendChild(processCard);
+            }
+            
+            // إظهار أزرار التحكم
+            document.getElementById('addRandomBtn').style.display = 'flex';
+            document.getElementById('clearProcessesBtn').style.display = 'flex';
+            document.getElementById('saveProcessesBtn').style.display = 'flex';
+            
+            // إخفاء رسالة التنبيه
+            document.getElementById('processAlert').style.display = 'none';
+            
+            showAlert(`تم إنشاء ${count} حقول إدخال للعمليات. يمكنك الآن ملء البيانات يدوياً`, 'success');
+        }
+        
+        // توليد خيارات الألوان
+        function generateColorOptions(index) {
+            let options = '';
+            for (let i = 0; i < ganttColors.length; i++) {
+                const colorName = getColorName(ganttColors[i]);
+                const selected = (i === ((index-1) % ganttColors.length)) ? 'selected' : '';
+                options += `<option value="${ganttColors[i]}" ${selected}>${colorName} (P${index})</option>`;
+            }
+            return options;
+        }
+        
+        // الحصول على اسم اللون
+        function getColorName(color) {
+            const colorNames = {
+                '#4361ee': 'أزرق',
+                '#f72585': 'وردي',
+                '#4cc9f0': 'سماوي',
+                '#f8961e': 'برتقالي',
+                '#7209b7': 'بنفسجي',
+                '#06d6a0': 'أخضر',
+                '#ef476f': 'أحمر',
+                '#118ab2': 'أزرق غامق',
+                '#ffd166': 'أصفر',
+                '#8338ec': 'بنفسجي فاتح',
+                '#3a86ff': 'أزرق فاتح',
+                '#fb5607': 'برتقالي محترق',
+                '#ff006e': 'وردي فاتح',
+                '#ffbe0b': 'أصفر ذهبي',
+                '#38b000': 'أخضر فاتح'
+            };
+            
+            return colorNames[color] || 'لون';
+        }
+        
+        // تعبئة البيانات عشوائياً
+        function fillRandomData() {
+            for (let i = 1; i <= processCount; i++) {
+                // قيم عشوائية
+                const arrival = Math.floor(Math.random() * 5);
+                const burst = Math.floor(Math.random() * 10) + 1;
+                const priority = Math.floor(Math.random() * 5) + 1;
+                
+                // تعيين القيم للحقول
+                document.getElementById(`arrival-${i}`).value = arrival;
+                document.getElementById(`burst-${i}`).value = burst;
+                document.getElementById(`priority-${i}`).value = priority;
+                
+                // تأثير بسيط عند التعبئة
+                const card = document.getElementById(`process-card-${i}`);
+                card.style.transform = 'scale(1.05)';
+                card.style.boxShadow = '0 0 20px rgba(76, 201, 240, 0.5)';
+                
+                setTimeout(() => {
+                    card.style.transform = '';
+                    card.style.boxShadow = '';
+                }, 300);
+            }
+            
+            showAlert('تم تعبئة البيانات عشوائياً لجميع العمليات', 'success');
+        }
+        
+        // مسح حقول الإدخال
+        function clearProcessInputs() {
+            if (!confirm('هل أنت متأكد من مسح جميع حقول الإدخال؟ سيتم فقدان جميع البيانات.')) {
+                return;
+            }
+            
+            for (let i = 1; i <= processCount; i++) {
+                document.getElementById(`arrival-${i}`).value = '';
+                document.getElementById(`burst-${i}`).value = '';
+                document.getElementById(`priority-${i}`).value = '';
+            }
+            
+            showAlert('تم مسح جميع حقول الإدخال', 'success');
+        }
+        
+        // حفظ العمليات
+        function saveProcesses() {
+            processes = [];
+            let hasError = false;
+            
+            // جمع البيانات من الحقول
+            for (let i = 1; i <= processCount; i++) {
+                const arrival = parseInt(document.getElementById(`arrival-${i}`).value);
+                const burst = parseInt(document.getElementById(`burst-${i}`).value);
+                const priority = parseInt(document.getElementById(`priority-${i}`).value);
+                const color = document.getElementById(`color-${i}`).value;
+                
+                // التحقق من صحة المدخلات
+                if (isNaN(arrival) || arrival < 0) {
+                    showAlert(`الرجاء إدخال زمن وصول صالح للعملية P${i}`, 'error');
+                    document.getElementById(`arrival-${i}`).focus();
+                    hasError = true;
+                    break;
+                }
+                
+                if (isNaN(burst) || burst <= 0) {
+                    showAlert(`الرجاء إدخال زمن تنفيذ صالح للعملية P${i}`, 'error');
+                    document.getElementById(`burst-${i}`).focus();
+                    hasError = true;
+                    break;
+                }
+                
+                if (isNaN(priority) || priority <= 0) {
+                    showAlert(`الرجاء إدخال أولوية صالحة للعملية P${i}`, 'error');
+                    document.getElementById(`priority-${i}`).focus();
+                    hasError = true;
+                    break;
+                }
+                
+                // إضافة العملية للقائمة
+                processes.push({
+                    id: `P${i}`,
+                    arrivalTime: arrival,
+                    burstTime: burst,
+                    priority: priority,
+                    color: color,
+                    remainingTime: burst,
+                    originalBurst: burst
+                });
+            }
+            
+            if (hasError) return;
+            
+            // عرض العمليات المحفوظة
+            displaySavedProcesses();
+            
+            showAlert(`تم حفظ ${processes.length} عملية بنجاح`, 'success');
+        }
+        
+        // عرض العمليات المحفوظة
+        function displaySavedProcesses() {
+            const savedSection = document.getElementById('savedProcessesSection');
+            const savedList = document.getElementById('savedProcessesList');
+            
+            savedList.innerHTML = '';
+            
+            if (processes.length === 0) {
+                savedSection.style.display = 'none';
+                return;
+            }
+            
+            processes.forEach(process => {
+                const processItem = document.createElement('div');
+                processItem.className = 'process-input-card';
+                processItem.style.borderLeftColor = process.color;
+                
+                processItem.innerHTML = `
+                    <div class="process-input-header">
+                        <div class="process-input-icon" style="background: ${process.color};">${process.id}</div>
+                        <h3 class="process-input-title">${process.id}</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div>
+                            <strong>زمن الوصول:</strong>
+                            <div style="color: var(--success); margin-top: 5px;">${process.arrivalTime}</div>
+                        </div>
+                        <div>
+                            <strong>زمن التنفيذ:</strong>
+                            <div style="color: var(--warning); margin-top: 5px;">${process.burstTime}</div>
+                        </div>
+                        <div>
+                            <strong>الأولوية:</strong>
+                            <div style="color: var(--accent); margin-top: 5px;">${process.priority}</div>
+                        </div>
+                    </div>
+                `;
+                
+                savedList.appendChild(processItem);
+            });
+            
+            savedSection.style.display = 'block';
+            
+            // التمرير إلى القسم
+            savedSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // إخفاء النتائج
+        function hideResults() {
+            document.getElementById('ganttSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+        
+        // تشغيل المحاكاة
+        function runSimulation() {
+            if (processes.length === 0) {
+                showAlert('الرجاء حفظ العمليات أولاً قبل تشغيل المحاكاة', 'error');
+                return;
+            }
+            
+            // إعادة تعيين وقت التنفيذ المتبقي
+            processes.forEach(p => {
+                p.remainingTime = p.originalBurst;
+            });
+            
+            // نسخ العمليات لتجنب التعديل على الأصلية
+            let simulationProcesses = JSON.parse(JSON.stringify(processes));
+            
+            let results;
+            
+            // تطبيق الخوارزمية المحددة
+            switch(selectedAlgorithm) {
+                case 'fcfs':
+                    results = scheduleFCFS(simulationProcesses);
+                    break;
+                case 'sjf':
+                    results = scheduleSJF(simulationProcesses);
+                    break;
+                case 'srtf':
+                    results = scheduleSRTF(simulationProcesses);
+                    break;
+                case 'priority':
+                    results = schedulePriority(simulationProcesses);
+                    break;
+                case 'rr':
+                    const quantum = parseInt(document.getElementById('quantum').value) || 2;
+                    results = scheduleRR(simulationProcesses, quantum);
+                    break;
+                default:
+                    showAlert('الخوارزمية المحددة غير معروفة', 'error');
+                    return;
+            }
+            
+            // عرض النتائج
+            displayResults(results);
+            
+            showAlert(`تم تشغيل محاكاة خوارزمية ${getAlgorithmName(selectedAlgorithm)} بنجاح`, 'success');
+        }
+        
+        // الحصول على اسم الخوارزمية
+        function getAlgorithmName(algo) {
+            const names = {
+                'fcfs': 'أول ما يأتي أول ما يخدم',
+                'sjf': 'أقصر مهمة أولاً',
+                'srtf': 'أقصر وقت متبقي أولاً',
+                'priority': 'الأولوية',
+                'rr': 'التقسيم الزمني'
+            };
+            return names[algo] || algo;
+        }
+        
+        // خوارزمية: أول ما يأتي أول ما يخدم (FCFS)
+        function scheduleFCFS(processes) {
+            // ترتيب العمليات حسب زمن الوصول
+            processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
+            
+            let currentTime = 0;
+            let gantt = [];
+            
+            processes.forEach(process => {
+                // الانتظار حتى وصول العملية
+                if (currentTime < process.arrivalTime) {
+                    gantt.push({id: 'توقف', start: currentTime, end: process.arrivalTime, color: '#666'});
+                    currentTime = process.arrivalTime;
+                }
+                
+                // تنفيذ العملية
+                const startTime = currentTime;
+                const endTime = startTime + process.burstTime;
+                
+                gantt.push({
+                    id: process.id,
+                    start: startTime,
+                    end: endTime,
+                    color: process.color
+                });
+                
+                // حساب زمن الانتهاء والانتظار
+                process.completionTime = endTime;
+                process.waitingTime = startTime - process.arrivalTime;
+                process.turnaroundTime = process.completionTime - process.arrivalTime;
+                
+                currentTime = endTime;
+            });
+            
+            return {processes, gantt};
+        }
+        
+        // خوارزمية: أقصر مهمة أولاً (SJF)
+        function scheduleSJF(processes) {
+            // ترتيب العمليات حسب زمن الوصول أولاً
+            processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
+            
+            let currentTime = 0;
+            let completed = 0;
+            let gantt = [];
+            let isCompleted = new Array(processes.length).fill(false);
+            
+            while (completed < processes.length) {
+                let idx = -1;
+                let minBurst = Infinity;
+                
+                // البحث عن أقصر مهمة وصلت
+                for (let i = 0; i < processes.length; i++) {
+                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime && processes[i].burstTime < minBurst) {
+                        minBurst = processes[i].burstTime;
+                        idx = i;
+                    }
+                }
+                
+                // إذا لم توجد عملية وصلت، الانتقال لأقرب وقت وصول
+                if (idx === -1) {
+                    let nextArrival = Math.min(...processes.filter((p, i) => !isCompleted[i]).map(p => p.arrivalTime));
+                    gantt.push({id: 'توقف', start: currentTime, end: nextArrival, color: '#666'});
+                    currentTime = nextArrival;
+                    continue;
+                }
+                
+                // تنفيذ العملية
+                const startTime = currentTime;
+                const endTime = startTime + processes[idx].burstTime;
+                
+                gantt.push({
+                    id: processes[idx].id,
+                    start: startTime,
+                    end: endTime,
+                    color: processes[idx].color
+                });
+                
+                // حساب زمن الانتهاء والانتظار
+                processes[idx].completionTime = endTime;
+                processes[idx].waitingTime = startTime - processes[idx].arrivalTime;
+                processes[idx].turnaroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                
+                isCompleted[idx] = true;
+                completed++;
+                currentTime = endTime;
+            }
+            
+            return {processes, gantt};
+        }
+        
+        // خوارزمية: أقصر وقت متبقي أولاً (SRTF)
+        function scheduleSRTF(processes) {
+            let currentTime = 0;
+            let completed = 0;
+            let gantt = [];
+            let lastProcess = null;
+            
+            // نسخ العمليات لتتبع الوقت المتبقي
+            let remainingTime = processes.map(p => p.burstTime);
+            let isCompleted = new Array(processes.length).fill(false);
+            
+            while (completed < processes.length) {
+                // البحث عن العملية ذات أقصر وقت متبقي والتي وصلت
+                let idx = -1;
+                let minRemaining = Infinity;
+                
+                for (let i = 0; i < processes.length; i++) {
+                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime && remainingTime[i] < minRemaining) {
+                        minRemaining = remainingTime[i];
+                        idx = i;
+                    }
+                }
+                
+                // إذا لم توجد عملية وصلت، الانتقال لأقرب وقت وصول
+                if (idx === -1) {
+                    let nextArrival = Math.min(...processes.filter((p, i) => !isCompleted[i]).map(p => p.arrivalTime));
+                    gantt.push({id: 'توقف', start: currentTime, end: nextArrival, color: '#666'});
+                    currentTime = nextArrival;
+                    continue;
+                }
+                
+                // تسجيل بدء التنفيذ إذا كانت العملية مختلفة
+                if (lastProcess !== processes[idx].id) {
+                    if (gantt.length > 0 && gantt[gantt.length-1].id === processes[idx].id) {
+                        // إذا كانت نفس العملية متواصلة، نمددها
+                        gantt[gantt.length-1].end = currentTime + 1;
+                    } else {
+                        // إذا كانت عملية جديدة، نضيف جزء جديد
+                        gantt.push({
+                            id: processes[idx].id,
+                            start: currentTime,
+                            end: currentTime + 1,
+                            color: processes[idx].color
+                        });
+                    }
+                } else {
+                    // تمديد الجزء الحالي
+                    gantt[gantt.length-1].end = currentTime + 1;
+                }
+                
+                lastProcess = processes[idx].id;
+                
+                // تقليل الوقت المتبقي
+                remainingTime[idx]--;
+                currentTime++;
+                
+                // إذا انتهت العملية
+                if (remainingTime[idx] === 0) {
+                    isCompleted[idx] = true;
+                    completed++;
+                    
+                    // حساب زمن الانتهاء والانتظار
+                    processes[idx].completionTime = currentTime;
+                    processes[idx].waitingTime = processes[idx].completionTime - processes[idx].arrivalTime - processes[idx].burstTime;
+                    processes[idx].turnaroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                }
+            }
+            
+            return {processes, gantt};
+        }
+        
+        // خوارزمية: الأولوية
+        function schedulePriority(processes) {
+            // ترتيب العمليات حسب زمن الوصول أولاً
+            processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
+            
+            let currentTime = 0;
+            let completed = 0;
+            let gantt = [];
+            let isCompleted = new Array(processes.length).fill(false);
+            
+            while (completed < processes.length) {
+                let idx = -1;
+                let highestPriority = Infinity;
+                
+                // البحث عن العملية ذات أعلى أولوية (أقل رقم) والتي وصلت
+                for (let i = 0; i < processes.length; i++) {
+                    if (!isCompleted[i] && processes[i].arrivalTime <= currentTime && processes[i].priority < highestPriority) {
+                        highestPriority = processes[i].priority;
+                        idx = i;
+                    }
+                }
+                
+                // إذا لم توجد عملية وصلت، الانتقال لأقرب وقت وصول
+                if (idx === -1) {
+                    let nextArrival = Math.min(...processes.filter((p, i) => !isCompleted[i]).map(p => p.arrivalTime));
+                    gantt.push({id: 'توقف', start: currentTime, end: nextArrival, color: '#666'});
+                    currentTime = nextArrival;
+                    continue;
+                }
+                
+                // تنفيذ العملية
+                const startTime = currentTime;
+                const endTime = startTime + processes[idx].burstTime;
+                
+                gantt.push({
+                    id: processes[idx].id,
+                    start: startTime,
+                    end: endTime,
+                    color: processes[idx].color
+                });
+                
+                // حساب زمن الانتهاء والانتظار
+                processes[idx].completionTime = endTime;
+                processes[idx].waitingTime = startTime - processes[idx].arrivalTime;
+                processes[idx].turnaroundTime = processes[idx].completionTime - processes[idx].arrivalTime;
+                
+                isCompleted[idx] = true;
+                completed++;
+                currentTime = endTime;
+            }
+            
+            return {processes, gantt};
+        }
+        
+        // خوارزمية: التقسيم الزمني (RR)
+        function scheduleRR(processes, quantum) {
+            // ترتيب العمليات حسب زمن الوصول
+            processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
+            
+            let currentTime = 0;
+            let gantt = [];
+            let queue = [];
+            let index = 0;
+            
+            // نسخ العمليات لتتبع الوقت المتبقي
+            let remainingTime = processes.map(p => p.burstTime);
+            let isCompleted = new Array(processes.length).fill(false);
+            let lastProcess = null;
+            
+            // إضافة أول عملية وصلت إلى الطابور
+            while (index < processes.length && processes[index].arrivalTime <= currentTime) {
+                queue.push(index);
+                index++;
+            }
+            
+            while (true) {
+                // إذا كان الطابور فارغاً ولكن لا تزال هناك عمليات لم تصل
+                if (queue.length === 0) {
+                    if (index < processes.length) {
+                        // الانتقال لزمن وصول العملية التالية
+                        const nextArrival = processes[index].arrivalTime;
+                        gantt.push({id: 'توقف', start: currentTime, end: nextArrival, color: '#666'});
+                        currentTime = nextArrival;
+                        
+                        // إضافة جميع العمليات التي وصلت في هذا الوقت
+                        while (index < processes.length && processes[index].arrivalTime <= currentTime) {
+                            queue.push(index);
+                            index++;
+                        }
+                    } else {
+                        break; // انتهت جميع العمليات
+                    }
+                }
+                
+                // أخذ العملية التالية من الطابور
+                const processIdx = queue.shift();
+                
+                // تسجيل بدء التنفيذ
+                const startTime = currentTime;
+                const timeToExecute = Math.min(quantum, remainingTime[processIdx]);
+                const endTime = startTime + timeToExecute;
+                
+                // إضافة إلى مخطط جانت
+                if (lastProcess !== processes[processIdx].id) {
+                    gantt.push({
+                        id: processes[processIdx].id,
+                        start: startTime,
+                        end: endTime,
+                        color: processes[processIdx].color
+                    });
+                } else {
+                    // إذا كانت نفس العملية متواصلة، نمددها
+                    gantt[gantt.length-1].end = endTime;
+                }
+                
+                lastProcess = processes[processIdx].id;
+                
+                // تحديث الوقت المتبقي
+                remainingTime[processIdx] -= timeToExecute;
+                currentTime = endTime;
+                
+                // إضافة العمليات الجديدة التي وصلت خلال هذا التنفيذ
+                while (index < processes.length && processes[index].arrivalTime <= currentTime) {
+                    queue.push(index);
+                    index++;
+                }
+                
+                // إذا لم تنته العملية بعد، أعدها للطابور
+                if (remainingTime[processIdx] > 0) {
+                    queue.push(processIdx);
+                } else {
+                    // إذا انتهت العملية
+                    isCompleted[processIdx] = true;
+                    processes[processIdx].completionTime = currentTime;
+                    processes[processIdx].waitingTime = processes[processIdx].completionTime - processes[processIdx].arrivalTime - processes[processIdx].burstTime;
+                    processes[processIdx].turnaroundTime = processes[processIdx].completionTime - processes[processIdx].arrivalTime;
+                }
+            }
+            
+            return {processes, gantt};
+        }
+        
+        // عرض النتائج
+        function displayResults(results) {
+            const {processes, gantt} = results;
+            
+            // حساب المتوسطات
+            const totalWaitingTime = processes.reduce((sum, p) => sum + p.waitingTime, 0);
+            const totalTurnaroundTime = processes.reduce((sum, p) => sum + p.turnaroundTime, 0);
+            const avgWaitingTime = (totalWaitingTime / processes.length).toFixed(2);
+            const avgTurnaroundTime = (totalTurnaroundTime / processes.length).toFixed(2);
+            
+            // عرض مخطط جانت
+            displayGanttChart(gantt);
+            
+            // عرض الإحصائيات
+            displayStats(avgWaitingTime, avgTurnaroundTime, processes.length);
+            
+            // عرض جدول النتائج
+            displayResultsTable(processes);
+            
+            // إظهار أقسام النتائج
+            document.getElementById('ganttSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // التمرير إلى النتائج
+            document.getElementById('ganttSection').scrollIntoView({behavior: 'smooth'});
+        }
+        
+        // عرض مخطط جانت
+        function displayGanttChart(gantt) {
+            const ganttChart = document.getElementById('ganttChart');
+            const ganttLabels = document.getElementById('ganttLabels');
+            
+            ganttChart.innerHTML = '';
+            ganttLabels.innerHTML = '';
+            
+            if (gantt.length === 0) return;
+            
+            // حساب الطول الكلي للمخطط
+            const totalTime = gantt[gantt.length - 1].end;
+            const scale = 100 / totalTime;
+            
+            // إنشاء مقاطع جانت
+            gantt.forEach(segment => {
+                const width = (segment.end - segment.start) * scale;
+                const segmentDiv = document.createElement('div');
+                segmentDiv.className = 'gantt-segment';
+                segmentDiv.style.width = `${width}%`;
+                segmentDiv.style.backgroundColor = segment.color;
+                segmentDiv.title = `${segment.id}: ${segment.start} - ${segment.end}`;
+                segmentDiv.innerHTML = `<span>${segment.id}</span>`;
+                ganttChart.appendChild(segmentDiv);
+            });
+            
+            // إنشاء التسميات
+            const labelStep = Math.max(1, Math.ceil(totalTime / 10));
+            for (let time = 0; time <= totalTime; time += labelStep) {
+                const labelDiv = document.createElement('div');
+                labelDiv.textContent = time;
+                ganttLabels.appendChild(labelDiv);
+            }
+            
+            // إضافة التسمية الأخيرة إذا لم تكن موجودة
+            if (totalTime % labelStep !== 0) {
+                const lastLabelDiv = document.createElement('div');
+                lastLabelDiv.textContent = totalTime;
+                ganttLabels.appendChild(lastLabelDiv);
+            }
+        }
+        
+        // عرض الإحصائيات
+        function displayStats(avgWaiting, avgTurnaround, processCount) {
+            const statsContainer = document.getElementById('statsContainer');
+            
+            statsContainer.innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-label">الخوارزمية المستخدمة</div>
+                    <div class="stat-value">${getAlgorithmName(selectedAlgorithm)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">عدد العمليات</div>
+                    <div class="stat-value">${processCount}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">متوسط زمن الانتظار</div>
+                    <div class="stat-value">${avgWaiting}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">متوسط زمن الدوران</div>
+                    <div class="stat-value">${avgTurnaround}</div>
+                </div>
+            `;
+        }
+        
+        // عرض جدول النتائج
+        function displayResultsTable(processes) {
+            const resultsTable = document.getElementById('resultsTable');
+            resultsTable.innerHTML = '';
+            
+            // ترتيب العمليات حسب المعرف
+            const sortedProcesses = [...processes].sort((a, b) => {
+                return parseInt(a.id.substring(1)) - parseInt(b.id.substring(1));
+            });
+            
+            sortedProcesses.forEach(process => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: 700; color: ${process.color};">${process.id}</td>
+                    <td>${process.arrivalTime}</td>
+                    <td>${process.originalBurst || process.burstTime}</td>
+                    <td style="color: var(--success); font-weight: 600;">${process.completionTime}</td>
+                    <td style="color: ${process.waitingTime > 0 ? 'var(--warning)' : 'var(--success)'}; font-weight: 600;">
+                        ${process.waitingTime}
+                    </td>
+                    <td style="color: var(--accent); font-weight: 600;">${process.turnaroundTime}</td>
+                `;
+                resultsTable.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
